@@ -7,23 +7,44 @@
 
 using namespace std;
 
-int main()
-{
-    auto timeStart =
-        chrono::system_clock::to_time_t(chrono::system_clock::now());
+static int _sCount = 0;
 
-    int count = 0;
+void WorkerThread()
+{
     while (true)
     {
-        ++count;
+        // count in the thread
+        ++_sCount;
+
+        // wait in the thread
         this_thread::sleep_for(chrono::milliseconds(1000));
+    }
+}
 
-        auto timenow =
-            chrono::system_clock::to_time_t(chrono::system_clock::now());
+int main()
+{
+    thread* thread = new std::thread(&WorkerThread);
+    thread->detach();
 
-        char str[26];
-        ctime_s(str, sizeof str, &timenow);
+    int lastCount = 0;
 
-        cout << "Count: " << count << " " << str;
+    while (true)
+    {
+        this_thread::sleep_for(chrono::milliseconds(0));
+
+        if (lastCount != _sCount)
+        {
+            auto timenow =
+                chrono::system_clock::to_time_t(chrono::system_clock::now());
+
+            char str[26];
+            ctime_s(str, sizeof str, &timenow);
+
+            cout << "Thread +" << (_sCount - lastCount) << " " << str;
+
+            lastCount = _sCount;
+        }
+
+        this_thread::yield();
     }
 }
